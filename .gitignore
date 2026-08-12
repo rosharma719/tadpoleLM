@@ -1,2 +1,4 @@
 /data/raw/notes.txt
+.venv/
+__pycache__/
 *.pyc
