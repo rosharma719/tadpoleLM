@@ -4,17 +4,20 @@ import json
 from collections import Counter
 from pathlib import Path
 
+from config import CORPUS_PATH, END_OF_TEXT, TOKENIZER_PATH, VOCAB_SIZE
 
-# Bytes occupy IDs 0 through 255. This special token must never participate in
-# a merge, so learned tokens begin at 257.
-END_OF_TEXT = 256
-DEFAULT_VOCAB_SIZE = 1024
-FIRST_MERGE_ID = 257
+
+# A byte has 8 bits, so it has 2**8 = 256 possible values: IDs 0 through 255.
+# END_OF_TEXT occupies 256 and must not participate in merges, so BPE starts at 257.
+FIRST_MERGE_ID = END_OF_TEXT + 1
 
 
 def count_pairs(tokens: list[int]) -> Counter[tuple[int, int]]:
     """Count every adjacent pair in the current token stream."""
 
+    # tokens[1:] is tokens shifted one place left. zip aligns each token with
+    # its right-hand neighbor; Counter then maps each pair to its frequency.
+    # [10, 20, 10] becomes Counter({(10, 20): 1, (20, 10): 1}).
     return Counter(zip(tokens, tokens[1:]))
 
 
@@ -43,6 +46,7 @@ def merge_pair(tokens: list[int], pair: tuple[int, int], new_id: int) -> list[in
 
 class Tokenizer:
     def __init__(self, merges: list[tuple[int, int]]):
+        # __init__ runs after train/load has obtained the ordered merge list.
         self.merges = merges
         self.vocab = self.build_vocab()
 
@@ -52,10 +56,12 @@ class Tokenizer:
 
         data = json.loads(Path(path).read_text(encoding="utf-8"))
         merges = [tuple(pair) for pair in data["merges"]]
+        # cls is Tokenizer when called as Tokenizer.load(...). Calling
+        # cls(merges) constructs the instance, which then runs __init__ above.
         return cls(merges)
 
     @classmethod
-    def train(cls, text: str, vocab_size: int = DEFAULT_VOCAB_SIZE) -> "Tokenizer":
+    def train(cls, text: str, vocab_size: int = VOCAB_SIZE) -> "Tokenizer":
         """Learn BPE merges from text, choosing the most common pair each time."""
 
         if vocab_size < FIRST_MERGE_ID:
@@ -78,6 +84,8 @@ class Tokenizer:
             tokens = merge_pair(tokens, most_common_pair, new_id)
             merges.append(most_common_pair)
 
+        # Training first discovers the constructor input; only now do we create
+        # the Tokenizer instance and build its decoding vocabulary.
         return cls(merges)
 
     def build_vocab(self) -> dict[int, bytes]:
@@ -94,6 +102,8 @@ class Tokenizer:
     def encode(self, text: str, add_end: bool = False) -> list[int]:
         """Encode text as bytes, then replay the learned merges in order."""
 
+        # Start with universal byte tokens, then replay merges in the exact
+        # order learned; a later merge may refer to an earlier learned token.
         tokens = list(text.encode("utf-8"))
 
         for merge_number, pair in enumerate(self.merges):
@@ -105,7 +115,7 @@ class Tokenizer:
 
         return tokens
 
-    def decode(self, tokens: list[int]) -> str:
+    def decode(self, tokens: list[int], errors: str = "strict") -> str:
         """Expand token IDs back to their bytes, stopping at end-of-text."""
 
         pieces = []
@@ -117,7 +127,7 @@ class Tokenizer:
                 raise ValueError(f"invalid token: {token}")
             pieces.append(self.vocab[token])
 
-        return b"".join(pieces).decode("utf-8")
+        return b"".join(pieces).decode("utf-8", errors=errors)
 
     def save(self, path: str | Path) -> None:
         """Save the learned tokenizer as readable JSON."""
@@ -138,14 +148,14 @@ class Tokenizer:
 
 
 if __name__ == "__main__":
-    corpus = Path("data/raw/notes.txt").read_text(encoding="utf-8")
-    tokenizer_path = Path("tokenizer.json")
+    corpus = Path(CORPUS_PATH).read_text(encoding="utf-8")
+    tokenizer_path = Path(TOKENIZER_PATH)
 
     if tokenizer_path.exists():
         tokenizer = Tokenizer.load(tokenizer_path)
         print("loaded:          tokenizer.json")
     else:
-        print(f"training a {DEFAULT_VOCAB_SIZE}-token vocabulary...")
+        print(f"training a {VOCAB_SIZE}-token vocabulary...")
         tokenizer = Tokenizer.train(corpus)
         tokenizer.save(tokenizer_path)
         print("saved:           tokenizer.json")

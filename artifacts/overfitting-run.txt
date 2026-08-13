@@ -1,0 +1,100 @@
+device:           mps
+corpus:           data/generated/augmented_notes.txt
+training tokens:  314,456
+validation tokens: 34,940
+parameters:       11,129,856
+step    0 | train loss 7.0070 | validation loss 7.0075 | saved best
+sample ('i think'):
+i think an good there }. i’m�arha�K con ofderable and �� gu thenmakularunderstfunard ard)) like i aboutth dat pros that overuch
+    ere akage  the f, andproducak�ain a m
+step  100 | train loss 6.1533 | validation loss 6.1438 | saved best
+sample ('i think'):
+i thinking dnest me mb ofyowickexe mp,e to arketfepstlualupacan s topac aess w tCcires e iicallynignex forifes ul s
+step  200 | train loss 5.8904 | validation loss 5.9035 | saved best
+sample ('i think'):
+i think them thm to aes, is evalarketodelen
+            -st?ghate  to becausexoen s to  it  at  ab ifhner tposlhetwes ”all m they theven it a  cect i
+step  300 | train loss 4.7318 | validation loss 4.8496 | saved best
+sample ('i think'):
+i think no work that so buildumed in’t overduntidunili stely fy procepty, fesmost how conseeaious, which bredistatay to that posation it
+step  400 | train loss 4.3779 | validation loss 4.5687 | saved best
+sample ('i think'):
+i think but know that does merfa bassidurivirating”
+        - Es?
+    - C AI’m MPinn I’mMA ke
+    - I’m I think like
+        - c
+step  500 | train loss 4.2389 | validation loss 4.4486 | saved best
+sample ('i think'):
+i think to usines, theory
+- they’re coursultual concept part the mon sebook/shaoften one be brational
+    - call enjoy
+    - manset
+step  600 | train loss 4.1310 | validation loss 4.4161 | saved best
+sample ('i think'):
+i thinkers because their, it willschil
+        - her inserially concound ups like alents ben just coljzation
+    - it’d hevior againsts 
+step  700 | train loss 4.0343 | validation loss 4.3446 | saved best
+sample ('i think'):
+i thinking but now that kill want to ca los “you want to see un art, but more useful delid conested to be ailarly rory fase main people writing” or
+step  800 | train loss 3.9132 | validation loss 4.3285 | saved best
+sample ('i think'):
+i think-tes
+    - I’m I’m been’t sish it, but other and store a other it s, NIPI get I usually from politicism feeling companys ems 
+step  900 | train loss 3.8116 | validation loss 4.3354
+sample ('i think'):
+i thinking and solid gence out interesting, to be boptimization wouldn’t apagenting or something, and my pread. i closested with these otherse, and then genuine care lin
+step 1000 | train loss 3.6204 | validation loss 4.3250 | saved best
+sample ('i think'):
+i think of time
+        - there would catche that see, everyone watch mayer and pe. this but more actical art is that attens but i don’t want to be a look do one ta got 
+step 1100 | train loss 3.4151 | validation loss 4.2659 | saved best
+sample ('i think'):
+i think he from knowledge dle graph
+    - i’m abox with tue in the lignal is that are depemorities practically prediction markets are ine
+    - 
+- the conts of
+step 1200 | train loss 3.1182 | validation loss 4.3098
+sample ('i think'):
+i thinking for this is doing markets and synthes and perfumalong, i have to competse 
+        - i guess force gras are hion than titing of the firstive spec
+step 1300 | train loss 2.7566 | validation loss 4.3359
+sample ('i think'):
+i thinking
+            - but I’m not odd rather than I care eal drave? or contention is grassight, dimper
+        - with coently it’s annoy is the qu
+step 1400 | train loss 2.5205 | validation loss 4.4760
+sample ('i think'):
+i thinking “high” rosworth in attention specomes,” habstruge for the better than “syet fradiction”
+        - Val performance deces because par
+step 1500 | train loss 2.1275 | validation loss 4.6418
+sample ('i think'):
+i think those points
+            - we’d like the worthes the pay it’s quite cohing is alreading
+        - my alifievately invening yourself
+        - oncore feeling
+        -
+step 1600 | train loss 1.7545 | validation loss 4.7220
+sample ('i think'):
+i thinking onest again that most empathy diluto’s deculated vuity 
+- “how major things like the het it all that” is that i could backgr
+step 1700 | train loss 1.5035 | validation loss 4.9067
+sample ('i think'):
+i thinking is their more of undone onless in retentialists
+    - i don’t generally like that someone who wants to go to leness i retreplace art beyonl
+step 1800 | train loss 1.2197 | validation loss 5.1498
+sample ('i think'):
+i thinking, while i can enjoy the boi sensner than video dat
+    - also,ams have haspha — violoral engine, phieca
+step 1900 | train loss 0.9670 | validation loss 5.2519
+sample ('i think'):
+i think about that most writing economics is freally? 
+    - which is fun
+- startup concept: a metapt or offountility in by empliships from exchange new
+step 1999 | train loss 0.7782 | validation loss 5.3973
+sample ('i think'):
+i thinkitive dases
+    - i’m not quely turn into something like moment. my idea, or thought exhaustion of experimently that is while been that much more use of an a
+best validation:  4.2659
+saved:            model.pt

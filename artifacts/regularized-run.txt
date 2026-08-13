@@ -1,0 +1,140 @@
+
+device:           mps
+corpus:           data/generated/augmented_notes.txt
+training tokens:  314,456
+validation tokens: 34,940
+parameters:       3,483,136
+step    0 | train loss 6.9831 | validation loss 6.9820 | lr 3.00e-06 | saved best
+sample ('- i think'):
+- i think an  is there }e the .aracter�angha�5 con of�presable and �� their thenmakularunderstfunard ackard� to the tenthman pros that over� thoughtere akage  the f, andproduc pro� the idea a m
+step  100 | train loss 5.9418 | validation loss 5.9431 | lr 3.00e-04 | saved best
+sample ('- i think'):
+- i thinkenselfvcomp ds  re, but
+    -do io
+    - 
+        -anuast
+- and fly some,eticd to the hfhobvi�lfwaberut w  tr”itiasctdese f
+step  200 | train loss 4.7503 | validation loss 4.8517 | lr 2.99e-04 | saved best
+sample ('- i think'):
+- i think the onis a like it natist uch have the for curpute hoolliess and , I the sless andfer infrato hliving other bes are simil
+step  300 | train loss 4.4265 | validation loss 4.5601 | lr 2.97e-04 | saved best
+sample ('- i think'):
+- i think you can’t righting AI se
+    - I’m feels stical like that I’m internations reat model scially worksed
+    - I watching etc
+    - the unhying and truthor
+step  400 | train loss 4.2782 | validation loss 4.4568 | lr 2.93e-04 | saved best
+sample ('- i think'):
+- i think the kind and reductechnaject seementsences me because ny invery and de- time
+            - very people willself
+    - ushedge feels with somen
+step  500 | train loss 4.1941 | validation loss 4.3835 | lr 2.88e-04 | saved best
+sample ('- i think'):
+- i think you’re good does a camerablevel AI toward to a question of — em to be avolutionarymoreffice on builds from opufestties are 
+step  600 | train loss 4.1261 | validation loss 4.3461 | lr 2.81e-04 | saved best
+sample ('- i think'):
+- i think this blinis many stilling infter better curnument-drill I’m should sume with readed to a rights raward beciable with I
+step  700 | train loss 4.0357 | validation loss 4.3285 | lr 2.72e-04 | saved best
+sample ('- i think'):
+- i think about transtsee and oncold rapult a welling”
+    - there’s a plasurely fortrags like a human searchmeded indirect forcring 
+step  800 | train loss 3.9906 | validation loss 4.3064 | lr 2.63e-04 | saved best
+sample ('- i think'):
+- i think is kinda platekint start, treating without redifferent past that me
+- stuffic sampeeplied experiesn’t do from being prype 
+step  900 | train loss 3.8974 | validation loss 4.2853 | lr 2.52e-04 | saved best
+sample ('- i think'):
+- i think like, it’s obviously not the guittometax LLM to artist internalism is what firect the unsupercently buth for instance, but on everything about a 
+step 1000 | train loss 3.7930 | validation loss 4.2594 | lr 2.41e-04 | saved best
+sample ('- i think'):
+- i think i lot dropaly solitermathy
+    - i enjoy it been sertain very wkeither uninteresting
+        - subflways wher old because i
+step 1100 | train loss 3.6830 | validation loss 4.2099 | lr 2.28e-04 | saved best
+sample ('- i think'):
+- i think i really know how deperspective is only formativebooks tradepth just job/you don’tthink about them
+        - 
+    - and the personative an need to feels like doom
+step 1200 | train loss 3.5757 | validation loss 4.1711 | lr 2.15e-04 | saved best
+sample ('- i think'):
+- i think is mathematematically with being solutionary without howing; without often know the long is cool
+    - beyond bad compelling analyzers or experiment 
+step 1300 | train loss 3.4439 | validation loss 4.1588 | lr 2.01e-04 | saved best
+sample ('- i think'):
+- i think i’m novelting of book over times. i phyper phience le. 
+    - i want to enjoy criended too problem noticee could just human experi
+step 1400 | train loss 3.3393 | validation loss 4.1486 | lr 1.87e-04 | saved best
+sample ('- i think'):
+- i think that it’s just say my drigment
+    - like, the whole to reat marter of the same from contrastic, subject doesn’t makes me crititionally predictable to be 
+step 1500 | train loss 3.2313 | validation loss 4.1398 | lr 1.72e-04 | saved best
+sample ('- i think'):
+- i think i also that favorily recognize my byeach out
+- just dequick GPTV is probably reliberalism similarly infased ple 
+step 1600 | train loss 3.1472 | validation loss 4.1025 | lr 1.58e-04 | saved best
+sample ('- i think'):
+- i think the portunities biggest shifted burt
+        - the goals of those people demays exploitsals
+        - i like this tot and started without co
+step 1700 | train loss 3.0583 | validation loss 4.0797 | lr 1.43e-04 | saved best
+sample ('- i think'):
+- i think that i wouldn’t even if i like the myself to actually like this is 
+    - and i just kids care so much of the peither
+        - i guessar waying a samaw exams “
+step 1800 | train loss 2.9552 | validation loss 4.1061 | lr 1.29e-04
+sample ('- i think'):
+- i think ironically the difficultdjust to ment with groups/ject still womes simple marketplace on company bulty
+        - that the 
+step 1900 | train loss 2.8767 | validation loss 4.1064 | lr 1.15e-04
+sample ('- i think'):
+- i think was necessarily before an years. 
+    - i want to write myself a big dintuition. but now it’s not that i’ve learn the degenuinely because i don’t want my m
+step 2000 | train loss 2.8349 | validation loss 4.1125 | lr 1.02e-04
+sample ('- i think'):
+- i think i wonder why notes in the “LLM call my ownerdiction” and i don’t care about how not work or “what appreciate the ference”
+        - and i don’t know how i feel like a c
+step 2100 | train loss 2.7768 | validation loss 4.1234 | lr 8.92e-05
+sample ('- i think'):
+- i think the worrivial and a fewer aroundarily semotional clect” 
+    - means vision empathy, etc 
+    - i tend to financiately med as bad enough
+step 2200 | train loss 2.6982 | validation loss 4.1148 | lr 7.76e-05
+sample ('- i think'):
+- i think parad about how it way from a long would be readix back to “it make you waste learn it” 
+    - and the thought you art where you’re to the day. 
+    -
+step 2300 | train loss 2.6644 | validation loss 4.1084 | lr 6.70e-05
+sample ('- i think'):
+- i think part of whether i before connection creativity and liefs about how crypto-concept without, like a markets without has a little put and the f
+step 2400 | train loss 2.6248 | validation loss 4.1245 | lr 5.75e-05
+sample ('- i think'):
+- i think it’s also i’ve just been classes that you can’t be a take too jughter — but in-to take a brand
+    - i’m not sure what if you cue bjud
+step 2500 | train loss 2.5880 | validation loss 4.1389 | lr 4.93e-05
+sample ('- i think'):
+- i think there’s alsociated from right, it’s not so it’s stribution that you
+    - it’s not genuinely correceive, not that— I’ve been an accurrent, like 
+step 2600 | train loss 2.5670 | validation loss 4.1474 | lr 4.25e-05
+sample ('- i think'):
+- i thinkstructure to conflicting a taste able
+        - the tacriends community isn’t create since curated, but political policy, i need to expos
+step 2700 | train loss 2.5517 | validation loss 4.1603 | lr 3.71e-05
+sample ('- i think'):
+- i think the thuments to be exploring my spaces to me
+- it’s not inconnection
+    - thought with it, place artly because it feel always dragorous to mod ex
+step 2800 | train loss 2.5152 | validation loss 4.1409 | lr 3.32e-05
+sample ('- i think'):
+- i think the culture of judging scrossss the consider block
+    - it’s propertying when i like the maybe this was that watch at a micro
+step 2900 | train loss 2.4957 | validation loss 4.1465 | lr 3.08e-05
+sample ('- i think'):
+- i think that’s at of entered in whatever with 2000820% of a partest 0% of pick realizationbecause the s, or + wherial Amajajin
+step 2999 | train loss 2.4810 | validation loss 4.1583 | lr 3.00e-05
+sample ('- i think'):
+- i think rhonestly human demory and more story
+    - my aulearning disagree with their internal seper to AI will build attempt to before with
+best validation:  4.0797
+saved:            model.pt
+
+ ~/De/C/tadpoleLM  main !4 ?4                     ✔  28m 44s  tadpoleLM Py  11:10:11 PM 

@@ -1,4 +1,7 @@
 /data/raw/notes.txt
+/data/generated/
+.env
 .venv/
 __pycache__/
 *.pyc
+/model.pt
