@@ -31,4 +31,21 @@ This code is AI-generated; this README isn't.
 2. Start with batch size 1, predict 1 new token. This uses logits[:, -1, :], which is the full token vector of the final sequence index in all batches (just the one batch). 
 3. Continue generating; next token logits are divided by temperature. Temperature < 1 means the difference between logits grows, so bigger logits become more likely. We also have to convert logits to probabilities using softmax. Append to the sequence and repeat generation. 
 
+## Sample Output (500 tokens, temperature=0.7)
 
+
+- i think the eout of that i don’t want to be a lot of my strictly be the outcomesthetically content
+- just not getting about how most people and on untiles to meaning too is an infascinating
+    - but not gruances might be a look it’s annoying it’s an in-pretty relativity
+    - the questioning direction of the led meaning that it output and then you should be such i have to learn the untist’s an evaluates you could come ast up needing it
+    - i notice force becomes it
+    - just makes even if you’re all about a dumb inflearing and feels domaint and processential to reading it
+    - “what relyabout way” and then ether novel way
+    - the awaste to becide and often “ware about this” 
+    - forwaste finit’s become mave anularity 
+- math choices that really active write can be some experience
+    - you’re doing technically the decision, but that’s cument
+    - i chany of the comeralental of gentered to talking is funny, but obviously
+    - you can resolving want to company funny 
+    - like, that it’s a lot of the problem is do talkead, like a other was storgirds for AI, derenageepends nsimple often up without responses? 
+    - which makes i ambigin much of the way i feel like inno much as my own outcomes from the nerkind of about a hadent of clase of jargon remon, and genuinely, whimse force of a largony p a lue twarian kid, and no meta flongersame exect or something i like show, ie their frich levels of idea jud
