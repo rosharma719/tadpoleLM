@@ -1,0 +1,5 @@
+# The Vast.ai PyTorch image already supplies torch and CUDA.
+huggingface-hub>=0.34,<2
+numpy>=2.0,<3
+pyarrow>=21,<27
+tokenizers>=0.21,<1

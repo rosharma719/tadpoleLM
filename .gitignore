@@ -5,4 +5,6 @@
 __pycache__/
 *.pyc
 /model.pt
+/modern_model.pt
+/cloud_runs/
 .claude/settings.json
