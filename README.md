@@ -2,7 +2,7 @@
 
 ## Description
 
-This is a tiny, proof-of-concept LLM I created based on my personal notes (not included here), similar in scale and nature to Karpathy's NanoGPT. Hopefully, we can extend this to something enabling more fun interpretability projects. 
+This is a series of tiny, proof-of-concept LLMs I created based on my personal notes (not included here), similar in scale and nature to Karpathy's NanoGPT, and then extended with more scale. 
 
 - the corpus being used is my personal notes. i wrote it in a very conversational style, which i'm intentionally mimicking here
    - lots of "quotes", other fun bad grammar stuff
@@ -10,9 +10,12 @@ This is a tiny, proof-of-concept LLM I created based on my personal notes (not i
 - the inference prompt is "- i think "
 - since it's a super small corpus, i used an LLM to paraphrase and augment it (script but not results are available)
 
-Check out the training run artifacts; you can watch the model learn (and overfit) in real time! The configs used to generate each model are also available. I outlined the training and inference workflows below. 
+We started with an 11M model that I pretrained on my notes. With the second model (tadpole-english-30m) and subsequent model (tadpole-notes-30m), we extended to a 30M parameter model that we first pretrained on HF's FineWeb-Edu. The tadpole-notes-30m was pretrained on teh English dataset and then fine-tuned on my notes. The 30M models were trained on vast.ai GPUs.
 
-This code is AI-generated; this README isn't. 
+Check out the training run artifacts for the original model (not on HF); for the 11M model, you can watch it learn (and overfit) in real time! The configs used to generate each model are also available. I outlined the training and inference workflows below. 
+
+Models available at https://huggingface.co/rosharma719. Check out the artifacts folder to read some of their output!
+
 
 ## Training Workflow
 1. Load tokenizer.json and replay learned BPE merges. This returns one long 1D tensor (of integer token IDs, corresponding to learned tokens)
@@ -31,21 +34,3 @@ This code is AI-generated; this README isn't.
 2. Start with batch size 1, predict 1 new token. This uses logits[:, -1, :], which is the full token vector of the final sequence index in all batches (just the one batch). 
 3. Continue generating; next token logits are divided by temperature. Temperature < 1 means the difference between logits grows, so bigger logits become more likely. We also have to convert logits to probabilities using softmax. Append to the sequence and repeat generation. 
 
-## Sample Output (500 tokens, temperature=0.7)
-
-
-- i think the eout of that i don’t want to be a lot of my strictly be the outcomesthetically content
-- just not getting about how most people and on untiles to meaning too is an infascinating
-    - but not gruances might be a look it’s annoying it’s an in-pretty relativity
-    - the questioning direction of the led meaning that it output and then you should be such i have to learn the untist’s an evaluates you could come ast up needing it
-    - i notice force becomes it
-    - just makes even if you’re all about a dumb inflearing and feels domaint and processential to reading it
-    - “what relyabout way” and then ether novel way
-    - the awaste to becide and often “ware about this” 
-    - forwaste finit’s become mave anularity 
-- math choices that really active write can be some experience
-    - you’re doing technically the decision, but that’s cument
-    - i chany of the comeralental of gentered to talking is funny, but obviously
-    - you can resolving want to company funny 
-    - like, that it’s a lot of the problem is do talkead, like a other was storgirds for AI, derenageepends nsimple often up without responses? 
-    - which makes i ambigin much of the way i feel like inno much as my own outcomes from the nerkind of about a hadent of clase of jargon remon, and genuinely, whimse force of a largony p a lue twarian kid, and no meta flongersame exect or something i like show, ie their frich levels of idea jud
