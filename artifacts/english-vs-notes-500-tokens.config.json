@@ -1,0 +1,68 @@
+{
+  "samples_file": "english-vs-notes-500-tokens.txt",
+  "generated_at": "2026-08-15",
+  "sampling": {
+    "prompt": "- i think",
+    "temperature": 0.8,
+    "requested_new_tokens": 500,
+    "method": "multinomial",
+    "random_seed": null,
+    "device": "mps",
+    "english_stop_at_end_of_text": true,
+    "notes_stop_at_end_of_text": false
+  },
+  "models": {
+    "english": {
+      "repo": "rosharma719/tadpole-english-30m",
+      "checkpoint": "best.pt",
+      "final_validation_loss": 3.4463
+    },
+    "notes": {
+      "repo": "rosharma719/tadpole-notes-30m",
+      "checkpoint": "best.pt",
+      "best_notes_validation_loss": 3.2013
+    }
+  },
+  "architecture": {
+    "vocab_size": 8192,
+    "context_length": 512,
+    "embedding_size": 512,
+    "number_of_heads": 8,
+    "number_of_blocks": 8,
+    "feed_forward_multiplier": 4,
+    "dropout": 0.1,
+    "weight_init_std": 0.02
+  },
+  "pretraining": {
+    "training_tokens": 600000000,
+    "validation_tokens": 5000000,
+    "tokenizer_documents": 100000,
+    "batch_size": 256,
+    "learning_rate": 0.0006,
+    "minimum_learning_rate": 0.00006,
+    "warmup_steps": 100,
+    "weight_decay": 0.1,
+    "gradient_clip": 1.0,
+    "evaluation_interval": 100,
+    "evaluation_batches": 20,
+    "upload_interval": 500,
+    "sample_tokens": 50,
+    "seed": 42
+  },
+  "notes_finetuning": {
+    "training_tokens": 2000000,
+    "notes_fraction": 0.85,
+    "notes_validation_fraction": 0.1,
+    "batch_size": 16,
+    "learning_rate": 0.00003,
+    "minimum_learning_rate": 0.000003,
+    "warmup_steps": 20,
+    "weight_decay": 0.01,
+    "gradient_clip": 1.0,
+    "evaluation_interval": 20,
+    "evaluation_batches": 10,
+    "english_loss_tolerance": 0.4,
+    "sample_tokens": 50,
+    "seed": 42
+  }
+}

@@ -1,0 +1,44 @@
+TadpoleLM: English pretraining vs. notes fine-tuning
+Generated: 2026-08-15
+Prompt: - i think
+Temperature: 0.8
+Requested new tokens per model: 500
+
+The English sample did not encounter end-of-text. The notes model naturally
+ended its first note early, so this saved 500-token comparison allows generation
+to continue across <|endoftext|> markers. Those markers show where the model
+believes one note ends and another begins.
+
+==========================================================================
+ENGLISH-PRETRAINED MODEL
+rosharma719/tadpole-english-30m
+==========================================================================
+
+- i think the rest of the ancient world would be in the means of interruption. The outcome was to prevent the future of human slavery and to stop the advancement of human rights.
+Maurice in the left hand was the subject of significant change, and was the subject of the policy and moral withworldly discussed the fundamental things that must be addressed. In this part, the European Commission has proposed its own policy by establishing the principles of interruption, colonialism, and economic phenomena, and embracing the impact of these principles. In the Council of Europe, as a head of state, the European Commission has been part of the European European Commission’s commitment to reconciling the force of all concerned citizens and their belonging principles, and in the case of the British government, it has been to bring forth its own policy by establishing the Council of Europe.
+In this position, it has been proposed as a state-regional agreement and is the subject of the European Commission, and thus it is necessary to provide the basis for the EU on the question of the concept of interruption. One of the exactions that the Commission has proposed is the EU’s policy, which is mainly based on the implications of interruption and equity, and the consequences of interruption. This makes it possible to be interrupted by oversight of the EU into the European force of First Nations. Focus on interruption and equity in the EU is key to disciplining the management of interruption. The European Commission has now implemented measures of interruption – the relevance of a global and international framework for interruption – a basis for interruption and equity.
+Global resources are also used by governments to provide access to the context of interruption. They can be found to be monitored by governments, and must be implemented during interruption. The IPCC and IPCC are therefore used to strengthen interruption and regulate interruption. The two primary long-standing strategies are the EU and European Commission to strengthen interruption and equity in the transition to interruption. The IPCC and IPCC are used to create a dynamic, and dynamic network of interruption within the EU.
+Issue section 13 of the UN Decision of Interruption in the Combat-Increasing and Religious World.
+The UN Decision of Interruption in the EU and the European Council
+
+==========================================================================
+NOTES-FINE-TUNED MODEL
+rosharma719/tadpole-notes-30m
+==========================================================================
+
+- i think creativity and what they think about is part of a larger socialist balance at the end of this deterioration
+     - that’s what it feels like? i think about being the world’s physical objects
+    - we’re really intelligible with non-existent living things but we can’t whimsier in terms of life, lol
+    - so i just have the ability to help us better understand when we’re optimistic with nothing
+    - the matter is completely free radicalization but that’s the whole thing<|endoftext|>- i want to be able to do this
+    - i want to be able to say “sophisticated” and “make a mindful”
+    - like, “don’t tell us?” so it’s not hard to say “sophisticated” or “why?”
+      - or “you must be the world” or “if there’s a science that has a good knowledge, it’s the world’s natural philosophy,” etc
+         - i mean “you can predict a science” and “in the universe”
+    - we can know that a science is not productive; humanity is “you can’t do this” but can’t do that
+     - i go back to doing this because it feels like a first-hand documentary, but that doesn’t necessarily imply that<|endoftext|>- i never think the idea of a thesis that I’m going to write my books is a hard-hit-for-life for me
+    - thesis is an intuitively interesting thing to do
+    - I appreciate our true and positive views and well-being; it’s just a shame for me because it’s a fantastic one
+     - thesis clearly states that thesis is an ontology
+        - I’m a true writer, but I’m unfortunate about thesis that everything is very generous
+    - for example, if you want to write a book on a book, you must write a book that is a strong book<|endoftext|>- in the labor market,

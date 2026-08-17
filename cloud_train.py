@@ -93,6 +93,26 @@ class Config(TransformerConfig):
     seed: int = 42
 
 
+@dataclass
+class FineTuneConfig:
+    """Small, gentle second stage that moves the English model toward notes."""
+
+    training_tokens: int = 2_000_000
+    notes_fraction: float = 0.85
+    notes_validation_fraction: float = 0.1
+    batch_size: int = 16
+    learning_rate: float = 3e-5
+    minimum_learning_rate: float = 3e-6
+    warmup_steps: int = 20
+    weight_decay: float = 0.01
+    gradient_clip: float = 1.0
+    evaluation_interval: int = 20
+    evaluation_batches: int = 10
+    english_loss_tolerance: float = 0.4
+    sample_tokens: int = 50
+    seed: int = 42
+
+
 def train_tokenizer(documents, path: Path, config: Config) -> Tokenizer:
     """Learn a byte-level BPE vocabulary from an iterator of English strings."""
     tokenizer = Tokenizer(BPE())
@@ -215,6 +235,52 @@ def write_token_data(
     return training_path, validation_path
 
 
+def split_note_documents(text: str) -> list[str]:
+    """Split Markdown notes between top-level bullets, never inside one."""
+    documents = []
+    current = []
+    for line in text.splitlines(keepends=True):
+        if line.startswith("- ") and current:
+            document = "".join(current).strip()
+            if document:
+                documents.append(document)
+            current = []
+        current.append(line)
+    document = "".join(current).strip()
+    if document:
+        documents.append(document)
+    return documents
+
+
+def write_note_data(
+    tokenizer: Tokenizer,
+    notes_path: Path,
+    directory: Path,
+    validation_fraction: float,
+    seed: int,
+) -> tuple[Path, Path]:
+    """Encode a document-level notes split without uploading the source text."""
+    documents = split_note_documents(notes_path.read_text(encoding="utf-8"))
+    if len(documents) < 2:
+        raise RuntimeError("notes need at least two top-level '- ' documents")
+
+    random.Random(seed).shuffle(documents)
+    validation_documents = max(1, round(len(documents) * validation_fraction))
+    validation = documents[:validation_documents]
+    training = documents[validation_documents:]
+    eot = tokenizer.token_to_id(END_OF_TEXT)
+    paths = directory / "notes_training.bin", directory / "notes_validation.bin"
+
+    for path, split in zip(paths, (training, validation)):
+        with path.open("wb") as output:
+            for document in split:
+                ids = tokenizer.encode(document).ids + [eot]
+                np.asarray(ids, dtype=np.int16).tofile(output)
+
+    print(f"notes documents:   {len(training):,} train / {len(validation):,} validation")
+    return paths
+
+
 def token_tensor(path: Path) -> torch.Tensor:
     """Map the binary file without copying all of it into a second CPU array."""
     # Copy-on-write gives PyTorch a writable view without copying the 500 MB
@@ -241,6 +307,21 @@ def make_batch(
     )
 
 
+def make_random_batch(
+    data: torch.Tensor,
+    batch_size: int,
+    context: int,
+    generator: torch.Generator,
+    device: torch.device,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Sample B complete context blocks, with replacement, from one stream."""
+    blocks = (len(data) - 1) // context
+    if blocks < 1:
+        raise RuntimeError("token stream is shorter than one context window")
+    numbers = torch.randint(blocks, (batch_size,), generator=generator)
+    return make_batch(data, numbers, context, device)
+
+
 @torch.inference_mode()
 def evaluate(
     model: Transformer,
@@ -249,11 +330,13 @@ def evaluate(
     batch_size: int,
     device: torch.device,
     mixed_precision: bool,
+    evaluation_batches: int | None = None,
 ) -> float:
     model.eval()
+    batches = evaluation_batches or config.evaluation_batches
     blocks = min(
         (len(data) - 1) // config.context_length,
-        config.evaluation_batches * batch_size,
+        batches * batch_size,
     )
     losses = []
     for start in range(0, blocks, batch_size):
@@ -572,6 +655,289 @@ def pretrain(arguments: argparse.Namespace) -> None:
         print(f"saved privately:   https://huggingface.co/{arguments.model_repo}")
 
 
+def finetune(arguments: argparse.Namespace) -> None:
+    """Continue a trained English model on notes plus English rehearsal."""
+    fine = FineTuneConfig()
+    if arguments.training_tokens is not None:
+        fine.training_tokens = arguments.training_tokens
+    if arguments.smoke:
+        fine.training_tokens = 16_384
+        fine.batch_size = 4
+        fine.warmup_steps = 1
+        fine.evaluation_interval = 1
+        fine.evaluation_batches = 1
+
+    micro_batch_size = arguments.micro_batch_size or fine.batch_size
+    if micro_batch_size < 1 or micro_batch_size > fine.batch_size:
+        raise ValueError(
+            f"--micro-batch-size must be between 1 and {fine.batch_size}"
+        )
+    if not 0 < fine.notes_fraction < 1:
+        raise ValueError("notes_fraction must be between zero and one")
+
+    random.seed(fine.seed)
+    np.random.seed(fine.seed)
+    torch.manual_seed(fine.seed)
+    device = torch.device(choose_device(cuda_first=True))
+    mixed_precision = device.type == "cuda"
+    if device.type == "cuda":
+        torch.backends.cuda.matmul.allow_tf32 = True
+
+    base_output = Path(arguments.base_output)
+    output = Path(arguments.output)
+    output.mkdir(parents=True, exist_ok=True)
+    model, tokenizer = load_saved_model(arguments.model_repo, base_output)
+    model.to(device)
+    config = model.config
+
+    tokenizer_path = output / "tokenizer.json"
+    config_path = output / "config.json"
+    fine_config_path = output / "finetune_config.json"
+    tokenizer.save(str(tokenizer_path))
+    config_path.write_text(json.dumps(asdict(config), indent=2) + "\n")
+    fine_config_path.write_text(json.dumps(asdict(fine), indent=2) + "\n")
+
+    note_training_path, note_validation_path = write_note_data(
+        tokenizer,
+        Path(arguments.notes),
+        output,
+        fine.notes_validation_fraction,
+        fine.seed,
+    )
+    english_training_path = base_output / "training.bin"
+    english_validation_path = base_output / "validation.bin"
+    for path in (english_training_path, english_validation_path):
+        if not path.exists():
+            raise FileNotFoundError(
+                f"{path} is required for the 15% English rehearsal stream"
+            )
+
+    note_training = token_tensor(note_training_path)
+    note_validation = token_tensor(note_validation_path)
+    english_training = token_tensor(english_training_path)
+    english_validation = token_tensor(english_validation_path)
+
+    optimizer_kwargs = {
+        "lr": fine.learning_rate,
+        "weight_decay": fine.weight_decay,
+        "betas": (0.9, 0.95),
+    }
+    if device.type == "cuda":
+        optimizer_kwargs["fused"] = True
+    optimizer = torch.optim.AdamW(model.parameters(), **optimizer_kwargs)
+    total_steps = math.ceil(
+        fine.training_tokens / (fine.batch_size * config.context_length)
+    )
+    generator = torch.Generator().manual_seed(fine.seed)
+
+    api = None
+    if arguments.destination_repo:
+        token = os.environ.get("HF_TOKEN")
+        if not token:
+            raise RuntimeError(
+                "HF_TOKEN is required when --destination-repo is set"
+            )
+        api = HfApi(token=token)
+        api.create_repo(
+            arguments.destination_repo,
+            repo_type="model",
+            private=True,
+            exist_ok=True,
+        )
+        upload_artifacts(
+            api,
+            arguments.destination_repo,
+            [tokenizer_path, config_path, fine_config_path],
+            "Add tokenizer and notes fine-tuning config",
+        )
+
+    print(f"device:            {device}")
+    print(f"base model:        {arguments.model_repo or base_output}")
+    print(f"output:            {output}")
+    print(f"note tokens:       {len(note_training):,} train / {len(note_validation):,} validation")
+    print(f"mixture:           {fine.notes_fraction:.0%} notes / {1 - fine.notes_fraction:.0%} English")
+    print(f"fine-tune tokens:  {fine.training_tokens:,}")
+    print(f"steps:             {total_steps:,}")
+    print(f"tokens per update: {fine.batch_size * config.context_length:,}")
+    print(
+        f"micro batch:       {micro_batch_size} sequences"
+        f" ({math.ceil(fine.batch_size / micro_batch_size)} accumulations)",
+        flush=True,
+    )
+
+    baseline_note_loss = evaluate(
+        model,
+        note_validation,
+        config,
+        micro_batch_size,
+        device,
+        mixed_precision,
+        fine.evaluation_batches,
+    )
+    baseline_english_loss = evaluate(
+        model,
+        english_validation,
+        config,
+        micro_batch_size,
+        device,
+        mixed_precision,
+        fine.evaluation_batches,
+    )
+    print(
+        f"baseline | notes {baseline_note_loss:.4f} | "
+        f"English {baseline_english_loss:.4f}",
+        flush=True,
+    )
+
+    latest_path = output / "latest.pt"
+    best_path = output / "best.pt"
+    best_note_loss = baseline_note_loss
+    save_checkpoint(best_path, model, None, 0, best_note_loss, config)
+    started = time.monotonic()
+    model.train()
+
+    for step in range(total_steps):
+        lr = cosine_learning_rate(
+            step,
+            fine.learning_rate,
+            fine.minimum_learning_rate,
+            fine.warmup_steps,
+            total_steps,
+        )
+        for group in optimizer.param_groups:
+            group["lr"] = lr
+
+        optimizer.zero_grad(set_to_none=True)
+        training_loss = 0.0
+        notes_seen = 0
+        for micro_start in range(0, fine.batch_size, micro_batch_size):
+            size = min(micro_batch_size, fine.batch_size - micro_start)
+            source_choices = torch.rand(size, generator=generator)
+            note_count = int((source_choices < fine.notes_fraction).sum())
+            english_count = size - note_count
+            inputs = []
+            targets = []
+            if note_count:
+                x, y = make_random_batch(
+                    note_training,
+                    note_count,
+                    config.context_length,
+                    generator,
+                    device,
+                )
+                inputs.append(x)
+                targets.append(y)
+                notes_seen += note_count
+            if english_count:
+                x, y = make_random_batch(
+                    english_training,
+                    english_count,
+                    config.context_length,
+                    generator,
+                    device,
+                )
+                inputs.append(x)
+                targets.append(y)
+
+            x = torch.cat(inputs)
+            y = torch.cat(targets)
+            with torch.autocast(
+                device_type=device.type,
+                dtype=torch.bfloat16,
+                enabled=mixed_precision,
+            ):
+                micro_loss = next_token_loss(model(x), y)
+                fraction = size / fine.batch_size
+                scaled_loss = micro_loss * fraction
+            scaled_loss.backward()
+            training_loss += micro_loss.item() * fraction
+
+        nn.utils.clip_grad_norm_(model.parameters(), fine.gradient_clip)
+        optimizer.step()
+
+        should_evaluate = (
+            step == 0
+            or (step + 1) % fine.evaluation_interval == 0
+            or step + 1 == total_steps
+        )
+        if should_evaluate:
+            note_loss = evaluate(
+                model,
+                note_validation,
+                config,
+                micro_batch_size,
+                device,
+                mixed_precision,
+                fine.evaluation_batches,
+            )
+            english_loss = evaluate(
+                model,
+                english_validation,
+                config,
+                micro_batch_size,
+                device,
+                mixed_precision,
+                fine.evaluation_batches,
+            )
+            english_is_preserved = (
+                english_loss
+                <= baseline_english_loss + fine.english_loss_tolerance
+            )
+            improved = english_is_preserved and note_loss < best_note_loss
+            if improved:
+                best_note_loss = note_loss
+                save_checkpoint(
+                    best_path,
+                    model,
+                    None,
+                    step + 1,
+                    best_note_loss,
+                    config,
+                )
+            save_checkpoint(
+                latest_path,
+                model,
+                optimizer,
+                step + 1,
+                best_note_loss,
+                config,
+            )
+            elapsed = (time.monotonic() - started) / 60
+            print(
+                f"step {step + 1:4d}/{total_steps} | "
+                f"train {training_loss:.4f} | notes {note_loss:.4f} | "
+                f"English {english_loss:.4f} | lr {lr:.2e} | "
+                f"{notes_seen}/{fine.batch_size} notes | {elapsed:.1f} min"
+                f"{' | saved best' if improved else ''}",
+                flush=True,
+            )
+            print(
+                sample(
+                    model,
+                    tokenizer,
+                    "- i think",
+                    fine.sample_tokens,
+                    0.8,
+                    device,
+                ),
+                flush=True,
+            )
+
+    upload_artifacts(
+        api,
+        arguments.destination_repo,
+        [latest_path, best_path],
+        f"Final notes checkpoint after step {total_steps}",
+    )
+    print(f"best notes loss:   {best_note_loss:.4f}")
+    print(f"saved locally:     {best_path}")
+    if arguments.destination_repo:
+        print(
+            "saved privately:   "
+            f"https://huggingface.co/{arguments.destination_repo}"
+        )
+
+
 def load_saved_model(
     model_repo: str | None, directory: Path
 ) -> tuple[Transformer, Tokenizer]:
@@ -647,6 +1013,31 @@ def main() -> None:
     # itself does not otherwise need these values.
     train_parser.add_argument("--support", nargs="*", help=argparse.SUPPRESS)
 
+    fine_parser = commands.add_parser("finetune")
+    fine_parser.add_argument(
+        "--model-repo",
+        help="source English model on Hugging Face; omit to use --base-output",
+    )
+    fine_parser.add_argument(
+        "--notes",
+        required=True,
+        help="local augmented notes text; this file is never uploaded",
+    )
+    fine_parser.add_argument(
+        "--base-output",
+        default="cloud_runs/english_30m",
+        help="directory containing the English training/validation token files",
+    )
+    fine_parser.add_argument("--output", default="cloud_runs/notes_30m")
+    fine_parser.add_argument("--destination-repo")
+    fine_parser.add_argument("--micro-batch-size", type=int)
+    fine_parser.add_argument(
+        "--training-tokens",
+        type=int,
+        help="override the default 2M-token personalization budget",
+    )
+    fine_parser.add_argument("--smoke", action="store_true")
+
     generate_parser = commands.add_parser("generate")
     generate_parser.add_argument("prompt", nargs="?", default="The meaning of")
     generate_parser.add_argument("--tokens", type=int, default=200)
@@ -660,6 +1051,8 @@ def main() -> None:
     arguments = parser.parse_args()
     if arguments.command == "pretrain":
         pretrain(arguments)
+    elif arguments.command == "finetune":
+        finetune(arguments)
     elif arguments.command == "generate":
         generate(arguments)
     else:

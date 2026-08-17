@@ -2,7 +2,7 @@
 
 The logit lens
 --------------
-``TinyTransformer.forward`` only converts the residual stream into vocabulary
+``Transformer.forward`` only converts the residual stream into vocabulary
 scores once, at the very end: ``language_model_head(final_norm(x))``. But x has
 shape (B,T,C) after *every* block, so that same unembedding can be applied to
 the half-finished residual stream too. Doing so asks each layer a question:
@@ -21,21 +21,19 @@ authoritative. The final row is exact: it is the model's real output.
 """
 
 import argparse
+from pathlib import Path
 
 import torch
+from tokenizers import Tokenizer
 
+from cloud_train import END_OF_TEXT, load_saved_model
 from config import (
-    CHECKPOINT_PATH,
-    CONTEXT_LENGTH,
     DEFAULT_PROMPT,
-    END_OF_TEXT,
     RANDOM_SEED,
     TEMPERATURE,
-    TOKENIZER_PATH,
 )
-from generate import choose_device
-from model import TinyTransformer
-from tokenizer import Tokenizer
+from gpt import Transformer
+from lm_utils import choose_device
 
 
 TOKEN_COLUMN_WIDTH = 11  # Characters reserved for one token's printed form.
@@ -43,7 +41,7 @@ LAYER_COLUMN_WIDTH = 14  # Characters reserved for the row label.
 
 
 def capture_residual_stream(
-    model: TinyTransformer,
+    model: Transformer,
     tokens: torch.Tensor,
 ) -> list[tuple[str, torch.Tensor]]:
     """Run the model once, keeping the residual stream after every stage.
@@ -82,26 +80,32 @@ def capture_residual_stream(
 
 
 def lens_probabilities(
-    model: TinyTransformer,
+    model: Transformer,
     residual: torch.Tensor,
 ) -> torch.Tensor:
-    """Decode a (B,T,C) residual stream into (B,T,V) next-token probabilities."""
+    """Decode the last (B,C) residual into (B,V) next-token probabilities.
 
-    logits = model.language_model_head(model.final_norm(residual))
+    The lens only displays the next-token prediction, so projecting every one
+    of the T positions would create T times more vocabulary logits than needed.
+    """
+
+    last_position = residual[:, -1, :]
+    logits = model.language_model_head(model.final_norm(last_position))
     return torch.softmax(logits, dim=-1)
 
 
 def display_token(tokenizer: Tokenizer, token_id: int) -> str:
     """Render one token ID compactly, keeping whitespace visible."""
 
-    if token_id == END_OF_TEXT:
+    if token_id == tokenizer.token_to_id(END_OF_TEXT):
         return "<end>"
 
-    # vocab is consulted directly rather than tokenizer.decode because a single
-    # BPE token can hold a partial UTF-8 sequence, and decode() also stops at
-    # END_OF_TEXT. repr() then quotes the text so ' the' and 'the' stay distinct
-    # and newlines print as \n instead of breaking the table.
-    text = tokenizer.vocab[token_id].decode("utf-8", errors="replace")
+    # ByteLevelDecoder turns visible BPE markers back into their actual text.
+    # A lone token can sometimes be only part of a UTF-8 character; in that
+    # case id_to_token still gives us a useful representation of the BPE piece.
+    text = tokenizer.decode([token_id], skip_special_tokens=False)
+    if not text:
+        text = tokenizer.id_to_token(token_id) or f"<token {token_id}>"
     shown = repr(text)
 
     if len(shown) > TOKEN_COLUMN_WIDTH:
@@ -115,7 +119,7 @@ def format_prediction(tokenizer: Tokenizer, token_id: int, probability: float) -
 
 
 def print_lens_step(
-    model: TinyTransformer,
+    model: Transformer,
     tokenizer: Tokenizer,
     tokens: torch.Tensor,
     sampled_token: int,
@@ -134,7 +138,7 @@ def print_lens_step(
     for stage_number, (name, residual) in enumerate(stream):
         # [0, -1] selects the only batch item at the final position: the slot
         # whose prediction becomes the next generated token.
-        probabilities = lens_probabilities(model, residual)[0, -1]
+        probabilities = lens_probabilities(model, residual)[0]
         top_probabilities, top_ids = probabilities.topk(top_k)
 
         cells = " ".join(
@@ -142,7 +146,7 @@ def print_lens_step(
             for token_id, probability in zip(top_ids, top_probabilities)
         )
         # The last stage's decode is not an approximation: it is exactly what
-        # TinyTransformer.forward returns, so its row is the model's real output.
+        # Transformer.forward returns, so its row is the model's real output.
         label = name + (" (real)" if stage_number == len(stream) - 1 else "")
         print(f"  {label:<{LAYER_COLUMN_WIDTH}}{cells}")
 
@@ -163,24 +167,26 @@ def run_demo(
     steps: int,
     temperature: float,
     top_k: int,
+    model_repo: str | None,
+    output: str,
 ) -> None:
     if temperature <= 0:
         raise ValueError("temperature must be greater than zero")
 
     torch.manual_seed(RANDOM_SEED)
     device = choose_device()
-    tokenizer = Tokenizer.load(TOKENIZER_PATH)
-
-    model = TinyTransformer().to(device)
-    model.load_state_dict(
-        torch.load(CHECKPOINT_PATH, map_location=device, weights_only=True)
-    )
+    model, tokenizer = load_saved_model(model_repo, Path(output))
+    model.to(device)
     model.eval()  # Dropout off, so the lens sees deterministic activations.
 
-    starting_tokens = tokenizer.encode(prompt) or [END_OF_TEXT]
+    end_of_text = tokenizer.token_to_id(END_OF_TEXT)
+    if end_of_text is None:
+        raise RuntimeError(f"tokenizer does not contain {END_OF_TEXT}")
+    starting_tokens = tokenizer.encode(prompt).ids or [end_of_text]
     tokens = torch.tensor([starting_tokens], dtype=torch.long, device=device)
 
-    print(f"checkpoint: {CHECKPOINT_PATH}")
+    checkpoint = model_repo or str(Path(output) / "best.pt")
+    print(f"checkpoint: {checkpoint}")
     print(f"device:     {device}")
     print(f"prompt:     {prompt!r} -> {len(starting_tokens)} tokens")
     print("lens:       final_norm + language_model_head applied after every stage")
@@ -194,7 +200,7 @@ def run_demo(
 
     with torch.no_grad():
         for step in range(steps):
-            context = tokens[:, -CONTEXT_LENGTH:]
+            context = tokens[:, -model.config.context_length:]
 
             # The real sampling path, identical to generate.py: only the final
             # layer's logits choose the token. The lens is an observer.
@@ -202,7 +208,10 @@ def run_demo(
             probabilities = torch.softmax(logits, dim=-1)
             sampled_token = torch.multinomial(probabilities, num_samples=1)
 
-            print(f"step {step + 1} | so far: {tokenizer.decode(tokens[0].tolist(), errors='replace')!r}")
+            decoded = tokenizer.decode(
+                tokens[0].tolist(), skip_special_tokens=False
+            )
+            print(f"step {step + 1} | so far: {decoded!r}")
             print_lens_step(
                 model,
                 tokenizer,
@@ -213,12 +222,12 @@ def run_demo(
             print()
 
             tokens = torch.cat((tokens, sampled_token), dim=1)
-            if sampled_token.item() == END_OF_TEXT:
+            if sampled_token.item() == end_of_text:
                 print("end-of-text sampled; stopping early")
                 break
 
     print("completion:")
-    print(tokenizer.decode(tokens[0].tolist(), errors="replace"))
+    print(tokenizer.decode(tokens[0].tolist(), skip_special_tokens=False))
 
 
 if __name__ == "__main__":
@@ -227,6 +236,15 @@ if __name__ == "__main__":
     parser.add_argument("--steps", type=int, default=8, help="tokens to generate")
     parser.add_argument("--temperature", type=float, default=TEMPERATURE)
     parser.add_argument("--top-k", type=int, default=5, help="predictions per layer")
+    parser.add_argument(
+        "--model-repo",
+        help="private Hugging Face model repo, for example USER/REPO",
+    )
+    parser.add_argument(
+        "--output",
+        default="cloud_runs/english_30m",
+        help="local cloud checkpoint directory when --model-repo is omitted",
+    )
     arguments = parser.parse_args()
 
     run_demo(
@@ -234,4 +252,6 @@ if __name__ == "__main__":
         arguments.steps,
         arguments.temperature,
         arguments.top_k,
+        arguments.model_repo,
+        arguments.output,
     )
